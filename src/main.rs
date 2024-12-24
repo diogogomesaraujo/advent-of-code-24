@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader, Read},
+    io::{BufReader, Read},
 };
+
+use regex::Regex;
 
 fn first_day() {
     match File::open("src/1.txt") {
@@ -206,6 +208,87 @@ fn second_day() {
     println!("{}", acc);
 }
 
+fn third_day() {
+    let file = match File::open("src/3.txt") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
+
+    let mut data: String = String::new();
+    let mut buf_reader = BufReader::new(file);
+    match buf_reader.read_to_string(&mut data) {
+        Ok(_) => {
+            let re = Regex::new(r"mul\((?<a>[0-9]{1,3}),(?<b>[0-9]{1,3})\)").expect("invalid re");
+            let mul_sum: i32 = re
+                .captures_iter(data.as_str())
+                .map(|c| {
+                    let a = c
+                        .name("a")
+                        .expect("invalid")
+                        .as_str()
+                        .parse::<i32>()
+                        .expect("invalid");
+                    let b = c
+                        .name("b")
+                        .expect("invalid")
+                        .as_str()
+                        .parse::<i32>()
+                        .expect("invalid");
+                    a * b
+                })
+                .sum();
+
+            println!("{}", mul_sum);
+
+            let mut enabled = true;
+
+            let re = Regex::new(
+                r"(mul\((?<a>[0-9]{1,3}),(?<b>[0-9]{1,3})\))|(?<d>do\(\))|(?<n>don't\(\))",
+            )
+            .expect("invalid re");
+
+            let sum: i32 = re
+                .captures_iter(data.as_str())
+                .map(|captured| {
+                    if let Some(_) = captured.name("d") {
+                        enabled = true;
+                        0
+                    } else if let Some(_) = captured.name("n") {
+                        enabled = false;
+                        0
+                    } else if enabled {
+                        let a = captured
+                            .name("a")
+                            .expect("invalid a")
+                            .as_str()
+                            .parse::<i32>()
+                            .expect("parsing a");
+
+                        let b = captured
+                            .name("b")
+                            .expect("invalid b")
+                            .as_str()
+                            .parse::<i32>()
+                            .expect("parsing b");
+
+                        a * b
+                    } else {
+                        0
+                    }
+                })
+                .sum();
+            println!("{}", sum);
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            return;
+        }
+    }
+}
+
 fn main() {
-    second_day();
+    third_day();
 }
