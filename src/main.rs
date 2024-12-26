@@ -289,6 +289,95 @@ fn third_day() {
     }
 }
 
+fn forth_day() {
+    let file = match File::open("src/4.txt") {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("{e}");
+            return;
+        }
+    };
+
+    let mut buf_reader = BufReader::new(file);
+    let mut data = String::new();
+
+    match buf_reader.read_to_string(&mut data) {
+        Ok(_) => {
+            let lines: Vec<String> = data.split('\n').map(String::from).collect();
+
+            let mut matrix: Vec<Vec<char>> = Vec::new();
+
+            for i in 0..lines.len() {
+                matrix.push(Vec::new());
+                for ch in lines[i].chars() {
+                    matrix[i].push(ch);
+                }
+            }
+
+            let dirs: Vec<(i32, i32)> = vec![
+                (1, 0),
+                (-1, 0),
+                (0, 1),
+                (0, -1),
+                (1, 1),
+                (-1, -1),
+                (1, -1),
+                (-1, 1),
+            ];
+
+            fn search_vector(dir: (i32, i32), v: &Vec<Vec<char>>) -> Vec<bool> {
+                let (x, y) = dir;
+                let mut results: Vec<bool> = Vec::new();
+                for i in 0..v.len() {
+                    for j in 0..v[i].len() {
+                        let ch = v[i][j];
+                        if ch == 'X' {
+                            for letter in vec!['M', 'A', 'S'] {
+                                let ch = match v.get((i as i32 + x) as usize) {
+                                    Some(ok1) => match ok1.get((j as i32 + y) as usize) {
+                                        Some(ok2) => ok2,
+                                        None => {
+                                            break;
+                                        }
+                                    },
+                                    None => {
+                                        break;
+                                    }
+                                };
+                                println!("Letter: {} Compare: {}", letter, ch);
+                                if *ch != letter {
+                                    //results.push(false);
+                                    break;
+                                }
+
+                                if letter == 'S' {
+                                    println!("reached s");
+                                    results.push(true);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                results
+            }
+
+            let mut results: Vec<bool> = Vec::new();
+
+            for dir in dirs {
+                let r: Vec<bool> = search_vector(dir, &matrix);
+                results.extend(r);
+            }
+
+            println!("{}", results.len());
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            return;
+        }
+    }
+}
+
 fn main() {
-    third_day();
+    forth_day();
 }
