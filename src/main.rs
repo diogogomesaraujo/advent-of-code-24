@@ -46,7 +46,7 @@ fn first_day() {
             let mut map2: HashMap<i64, i32> = HashMap::new();
             let mut final_map: HashMap<i64, i32> = HashMap::new();
 
-            for (n1) in l1.iter() {
+            for n1 in l1.iter() {
                 if let Some(val) = map1.get(n1) {
                     *map1.get_mut(n1).unwrap() = val + 1;
                 } else {
@@ -54,7 +54,7 @@ fn first_day() {
                 }
             }
 
-            for (n2) in l2.iter() {
+            for n2 in l2.iter() {
                 if let Some(val) = map2.get(n2) {
                     *map2.get_mut(n2).unwrap() = val + 1;
                 } else {
@@ -289,95 +289,114 @@ fn third_day() {
     }
 }
 
-fn forth_day() {
-    let file = match File::open("src/4.txt") {
-        Ok(file) => file,
-        Err(e) => {
-            eprintln!("{e}");
-            return;
-        }
-    };
+fn fourth_day() {
+    let directions = vec![
+        (0, 1),
+        (0, -1),
+        (1, 1),
+        (1, -1),
+        (1, 0),
+        (-1, 0),
+        (-1, -1),
+        (-1, 1),
+    ];
 
-    let mut buf_reader = BufReader::new(file);
-    let mut data = String::new();
+    let mut file = File::open("src/4.txt").expect("should open!");
+    let mut buf = String::new();
 
-    match buf_reader.read_to_string(&mut data) {
-        Ok(_) => {
-            let lines: Vec<String> = data.split('\n').map(String::from).collect();
+    file.read_to_string(&mut buf).expect("should read");
 
-            let mut matrix: Vec<Vec<char>> = Vec::new();
+    let lines: Vec<String> = buf.trim().split_whitespace().map(String::from).collect();
 
-            for i in 0..lines.len() {
-                matrix.push(Vec::new());
-                for ch in lines[i].chars() {
-                    matrix[i].push(ch);
-                }
-            }
+    let m: Vec<Vec<char>> = lines.iter().map(|line| line.chars().collect()).collect();
 
-            let dirs: Vec<(i32, i32)> = vec![
-                (1, 0),
-                (-1, 0),
-                (0, 1),
-                (0, -1),
-                (1, 1),
-                (-1, -1),
-                (1, -1),
-                (-1, 1),
-            ];
-
-            fn search_vector(dir: (i32, i32), v: &Vec<Vec<char>>) -> Vec<bool> {
-                let (x, y) = dir;
-                let mut results: Vec<bool> = Vec::new();
-                for i in 0..v.len() {
-                    for j in 0..v[i].len() {
-                        let ch = v[i][j];
-                        if ch == 'X' {
-                            for letter in vec!['M', 'A', 'S'] {
-                                let ch = match v.get((i as i32 + x) as usize) {
-                                    Some(ok1) => match ok1.get((j as i32 + y) as usize) {
-                                        Some(ok2) => ok2,
-                                        None => {
-                                            break;
-                                        }
-                                    },
-                                    None => {
-                                        break;
-                                    }
-                                };
-                                println!("Letter: {} Compare: {}", letter, ch);
-                                if *ch != letter {
-                                    //results.push(false);
-                                    break;
-                                }
-
-                                if letter == 'S' {
-                                    println!("reached s");
-                                    results.push(true);
-                                }
-                            }
-                        }
+    fn xmas(m: &Vec<Vec<char>>, x: usize, y: usize, dir: &(i32, i32)) -> bool {
+        let mut x: i32 = x as i32;
+        let mut y: i32 = y as i32;
+        let (dir_x, dir_y) = dir;
+        for ch in "XMAS".chars() {
+            match m.get(x as usize) {
+                Some(m) => match m.get(y as usize) {
+                    Some(_) => {}
+                    None => {
+                        return false;
                     }
+                },
+                None => {
+                    return false;
                 }
-
-                results
             }
-
-            let mut results: Vec<bool> = Vec::new();
-
-            for dir in dirs {
-                let r: Vec<bool> = search_vector(dir, &matrix);
-                results.extend(r);
+            if ch == m[x as usize][y as usize] {
+                x += dir_x;
+                y += dir_y;
+            } else {
+                return false;
             }
-
-            println!("{}", results.len());
         }
-        Err(e) => {
-            eprintln!("{e}");
-            return;
+
+        return true;
+    }
+
+    let mut count = 0;
+
+    for line in 0..m.len() {
+        for column in 0..m[line].len() {
+            for dir in &directions {
+                if xmas(&m, line, column, &dir) {
+                    count += 1;
+                }
+            }
         }
     }
+
+    println!("{}", count);
+}
+
+fn fourth_day_2() {
+    let mut file = File::open("src/4.txt").expect("should open!");
+    let mut buf = String::new();
+
+    file.read_to_string(&mut buf).expect("should read");
+
+    let lines: Vec<String> = buf.trim().split_whitespace().map(String::from).collect();
+
+    let m: Vec<Vec<char>> = lines.iter().map(|line| line.chars().collect()).collect();
+
+    fn mas(m: &Vec<Vec<char>>, x: usize, y: usize) -> bool {
+        if m[x][y] != 'A' || x >= m.len() - 1 || y >= m[0].len() - 1 || x == 0 || y == 0 {
+            return false;
+        }
+
+        let (d11, d12) = (m[x + 1][y + 1], m[x - 1][y - 1]);
+
+        let (d21, d22) = (m[x + 1][y - 1], m[x - 1][y + 1]);
+
+        match (d11, d12, d21, d22) {
+            ('M', 'S', 'M', 'S')
+            | ('M', 'S', 'S', 'M')
+            | ('S', 'M', 'M', 'S')
+            | ('S', 'M', 'S', 'M') => {
+                return true;
+            }
+            _ => {
+                return false;
+            }
+        }
+    }
+
+    let mut count = 0;
+
+    for line in 0..m.len() {
+        for column in 0..m[line].len() {
+            if mas(&m, line, column) {
+                count += 1;
+            }
+        }
+    }
+
+    println!("{}", count);
 }
 
 fn main() {
-    forth_day();
+    fourth_day_2();
 }
